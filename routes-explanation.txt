@@ -1,0 +1,240 @@
+# Bitsoft App — API Documentation
+
+All protected routes require an `Authorization: Bearer <token>` header.
+
+---
+
+## 🔐 Authentication — Public
+
+### Register Student
+`POST /api/sign-up`
+| Field | Type | Required |
+|---|---|---|
+| `fullName` | String | ✅ |
+| `email` | String | ✅ |
+| `password` | String (min 6) | ✅ |
+| `username` | String | ✅ |
+| `parentNumber` | String | ✅ |
+| `groupId` | String | ❌ |
+
+### Student Login
+`POST /api/login`
+| Field | Type | Required |
+|---|---|---|
+| `email` | String | ✅ |
+| `password` | String | ✅ |
+
+Returns: `{ token, user: { id, email } }`
+
+### Admin Login
+`POST /api/login/admin`
+| Field | Type | Required |
+|---|---|---|
+| `email` | String | ✅ |
+| `password` | String | ✅ |
+
+Returns: `{ token, user: { id, email } }`
+
+### Register Admin
+`POST /api/sign-up/admin`
+| Field | Type | Required |
+|---|---|---|
+| `email` | String | ✅ |
+| `password` | String (min 6) | ✅ |
+
+---
+
+## 👤 Profile — Protected
+
+### Get Own Profile
+`GET /api/me`
+- **Access:** Any authenticated user (Student or Admin)
+- **Returns:** Student record with linked `group`, `homework[]`, `studentActivities[]`
+
+---
+
+## 📝 Quiz & Daily Tests — Protected
+
+> Backed by `QuizSchema`, `Variants`, and `Submission` Prisma models.
+> Daily quizzes are automatically deactivated after 24 hours via a cron job.
+
+### Create Quiz Schemas — Batch
+`POST /api/tests/batch`
+- **Access:** Admin only
+
+Body:
+```json
+{
+  "tests": [
+    {
+      "type": "multipleChoice",
+      "title": "String",
+      "desc": "String (optional)",
+      "difficulty": "easy",
+      "topic": "String",
+      "image": "String (optional)",
+      "givenTime": 60,
+      "extraTime": 10,
+      "score": 100,
+      "isDaily": true,
+      "isActive": true,
+      "input": "String",
+      "explanation": "String",
+      "variants": [
+        { "option": "String", "isTrue": false },
+        { "option": "String", "isTrue": true }
+      ]
+    }
+  ]
+}
+```
+
+**Enums:**
+- `type`: `multipleChoice` | `bugHunting` | `expectedOutput` | `missingCode`
+- `difficulty`: `easy` | `medium` | `hard` | `expert` | `master`
+
+### Get Active Daily Quiz
+`GET /api/tests/daily`
+- **Access:** Student / Admin
+- **Required Header:** `level: easy | medium | hard | expert | master`
+- **Returns:** `QuizSchema` with `variants[]`, plus `submitted: Boolean` and `submission` object.
+- **404** if no active daily quiz exists for the given difficulty.
+
+### Submit Quiz
+`POST /api/tests/submit`
+- **Access:** Student (one submission per quiz)
+| Field | Type | Required |
+|---|---|---|
+| `quizSchemaId` | String | ✅ |
+
+Returns: `Submission` record. Errors if already submitted.
+
+### Leaderboard
+`GET /api/tests/leaderboard`
+- **Access:** All authenticated users
+- **Returns:** Students sorted descending by `totalScore` (sum of `QuizSchema.score` for all their submissions).
+```json
+[
+  { "id": "...", "fullName": "...", "rating": 0, "level": "easy", "totalScore": 350, "testsCompleted": 4 }
+]
+```
+
+### Get All Quiz Schemas
+`GET /api/tests`
+- **Access:** Admin only
+- **Returns:** All `QuizSchema` records with `variants[]` and `submittedUsers[]`, ordered by newest first.
+
+---
+
+## 📰 News — Protected
+
+### Create News
+`POST /api/news` — **Admin only**
+| Field | Type | Required |
+|---|---|---|
+| `title` | String | ✅ |
+| `description` | String | ✅ |
+| `pictureUrl` | String | ❌ |
+| `videoId` | String | ❌ |
+| `url` | String | ❌ |
+
+### Get All News
+`GET /api/get-all-news` — **Any authenticated user**
+
+### Get Latest News
+`GET /api/get-latest-news` — **Any authenticated user**
+- Returns the single most recently created news item.
+
+### Update News
+`PUT /api/news/:newsId` — **Admin only**
+- Body: any subset of news fields.
+
+### Delete News
+`DELETE /api/news/:newsId` — **Admin only**
+
+---
+
+## 👥 Students — Admin Only
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/students` | List all students (newest first) |
+| `GET` | `/api/students/:studentId` | Get single student |
+| `PUT` | `/api/students/:studentId` | Update student fields |
+| `DELETE` | `/api/students/:studentId` | Delete student |
+
+---
+
+## 📚 Courses — Admin Only
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/courses` | Create course (`name`, `description` required) |
+| `GET` | `/api/courses` | List all courses |
+| `GET` | `/api/courses/:courseId` | Get course with linked `groups[]` |
+| `PUT` | `/api/courses/:courseId` | Update course |
+| `DELETE` | `/api/courses/:courseId` | Delete course |
+
+---
+
+## 🏫 Groups — Admin Only
+
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/groups` | Create group (`name`, `courseId` required) |
+| `GET` | `/api/groups` | List all groups |
+| `GET` | `/api/groups/:groupId` | Get group with `course` and `students[]` |
+| `PUT` | `/api/groups/:groupId` | Update group |
+| `DELETE` | `/api/groups/:groupId` | Delete group |
+
+---
+
+## 📋 Homeworks — Admin Only
+
+### Create Homework
+`POST /api/homeworks`
+| Field | Type | Required |
+|---|---|---|
+| `title` | String | ✅ |
+| `description` | String | ✅ |
+| `deadline` | Date String | ✅ |
+| `studentId` | String | ✅ |
+| `checked` | Boolean | ❌ (default: false) |
+| `point` | Int | ❌ |
+
+### List / Filter Homeworks
+`GET /api/homeworks` — Use `?studentId=<id>` to filter by student.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/homeworks/:homeworkId` | Get single homework with student & activity |
+| `PUT` | `/api/homeworks/:homeworkId` | Update homework |
+| `DELETE` | `/api/homeworks/:homeworkId` | Delete homework |
+
+---
+
+## 📈 Student Activities — Admin Only
+
+### Log Activity
+`POST /api/student-activities`
+| Field | Type | Required |
+|---|---|---|
+| `studentId` | String | ✅ |
+| `rating` | String | ✅ |
+
+### List / Filter Activities
+`GET /api/student-activities` — Use `?studentId=<id>` to filter.
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/student-activities/:activityId` | Get single activity with student & tasks |
+| `PUT` | `/api/student-activities/:activityId` | Update activity |
+| `DELETE` | `/api/student-activities/:activityId` | Delete activity |
+
+---
+
+## ⚙️ System
+
+### Health Check
+`GET /healthxyz` — **Public**
+- Returns: `{ message: "Running", time: <ISO timestamp> }`

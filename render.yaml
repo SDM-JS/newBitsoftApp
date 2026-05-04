@@ -1,0 +1,5 @@
+services:
+  cron:
+    -url: /healthxyz
+    schedule: "*/10 * * * *"
+    method: GET
