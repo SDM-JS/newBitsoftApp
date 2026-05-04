@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "migrate": "prisma migrate reset && prisma migrate dev && prisma generate",
-    "start": "node index.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "deploy": "prisma migrate reset --force && prisma migrate deploy && prisma generate && pnpm start",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
