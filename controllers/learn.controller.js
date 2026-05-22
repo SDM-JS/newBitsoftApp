@@ -11,12 +11,16 @@ class LearnController {
       }
       const { imageUrl, desc, tasksId } = req.body;
       if (!imageUrl || !desc) {
-        return res.status(400).json({ error: "ImageUrl and desc are required!" });
+        return res
+          .status(400)
+          .json({ error: "ImageUrl and desc are required!" });
       }
       const learn = await prisma.learn.create({
         data: { imageUrl, desc, tasksId },
       });
-      return res.status(201).json({ message: "Learn resource created successfully!", learn });
+      return res
+        .status(201)
+        .json({ message: "Learn resource created successfully!", learn });
     } catch (error) {
       next(error);
     }
@@ -68,7 +72,9 @@ class LearnController {
         where: { id: learnId },
         data: { ...req.body },
       });
-      return res.status(200).json({ message: "Learn resource updated successfully!", learn });
+      return res
+        .status(200)
+        .json({ message: "Learn resource updated successfully!", learn });
     } catch (error) {
       next(error);
     }
@@ -87,7 +93,35 @@ class LearnController {
       await prisma.learn.delete({
         where: { id: learnId },
       });
-      return res.status(200).json({ message: "Learn resource deleted successfully!" });
+      return res
+        .status(200)
+        .json({ message: "Learn resource deleted successfully!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateStudentPassword(req, res, next) {
+    try {
+      const { role } = req.student;
+      if (role !== "org::admin") {
+        res.status(403).json({ error: "Forbidden" });
+        throw BaseError.Forbidden();
+      }
+      const { studentId, newPassword } = req.body;
+      if (!studentId || !newPassword) {
+        return res
+          .status(400)
+          .json({ error: "Student ID and new password are required!" });
+      }
+      const hashPassword = await bcrypt.hash(newPassword, 10);
+      const student = await prisma.students.update({
+        where: { id: studentId },
+        data: { password: hashPassword },
+      });
+      return res
+        .status(200)
+        .json({ message: "Student password updated successfully!", student });
     } catch (error) {
       next(error);
     }

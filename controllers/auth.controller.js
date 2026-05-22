@@ -17,17 +17,15 @@ class AuthController {
           .status(400)
           .json({ error: "Password must be more than 6 characters long!" });
       }
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
       const newStudent = await prisma.student.create({
         data: {
           fullName,
           email,
           parentNumber,
           username,
-          password: hashedPassword,
+          password,
           groupId: groupId || undefined,
-          level :'easy'
+          level: 'easy'
         },
       });
       return res.status(201).json({
@@ -55,11 +53,7 @@ class AuthController {
         return res.status(400).json({ error: "Invalid email or password!" });
       }
 
-      const isCorrectPassword = await bcrypt.compare(
-        password,
-        student.password,
-      );
-      if (!isCorrectPassword) {
+      if (password !== student.password) {
         return res.status(400).json({ error: "Invalid email or password!" });
       }
 
