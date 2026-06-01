@@ -100,32 +100,6 @@ class LearnController {
       next(error);
     }
   }
-
-  async updateStudentPassword(req, res, next) {
-    try {
-      const { role } = req.student;
-      if (role !== "org::admin") {
-        res.status(403).json({ error: "Forbidden" });
-        throw BaseError.Forbidden();
-      }
-      const { studentId, newPassword } = req.body;
-      if (!studentId || !newPassword) {
-        return res
-          .status(400)
-          .json({ error: "Student ID and new password are required!" });
-      }
-      const hashPassword = await bcrypt.hash(newPassword, 10);
-      const student = await prisma.students.update({
-        where: { id: studentId },
-        data: { password: hashPassword },
-      });
-      return res
-        .status(200)
-        .json({ message: "Student password updated successfully!", student });
-    } catch (error) {
-      next(error);
-    }
-  }
 }
 
 export default new LearnController();

@@ -23,4 +23,10 @@ adminRoutes.delete(
   adminController.deleteAdmin,
 );
 
+adminRoutes.patch(
+  "/api/students/:studentId/password",
+  authMiddleware,
+  adminController.changeStudentPassword,
+);
+
 export default adminRoutes;
