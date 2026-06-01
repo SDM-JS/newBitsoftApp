@@ -11,16 +11,22 @@ class AdminController {
       }
       const { email, password } = req.body;
       if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required!" });
+        return res
+          .status(400)
+          .json({ error: "Email and password are required!" });
       }
       const existingAdmin = await prisma.admin.findFirst({ where: { email } });
       if (existingAdmin) {
-        return res.status(400).json({ error: "Admin with this email already exists!" });
+        return res
+          .status(400)
+          .json({ error: "Admin with this email already exists!" });
       }
       const admin = await prisma.admin.create({
         data: { email, password },
       });
-      return res.status(201).json({ message: "Admin created successfully!", admin });
+      return res
+        .status(201)
+        .json({ message: "Admin created successfully!", admin });
     } catch (error) {
       next(error);
     }
@@ -77,7 +83,9 @@ class AdminController {
         where: { id: adminId },
         data: { ...req.body },
       });
-      return res.status(200).json({ message: "Admin updated successfully!", admin });
+      return res
+        .status(200)
+        .json({ message: "Admin updated successfully!", admin });
     } catch (error) {
       next(error);
     }
@@ -97,6 +105,41 @@ class AdminController {
         where: { id: adminId },
       });
       return res.status(200).json({ message: "Admin deleted successfully!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async changeStudentPassword(req, res, next) {
+    try {
+      const { role } = req.student;
+      if (role !== "org::admin") {
+        res.status(403).json({ error: "Forbidden" });
+        throw BaseError.Forbidden();
+      }
+      const { studentId } = req.params;
+      const { newPassword } = req.body;
+      if (!newPassword) {
+        return res.status(400).json({ error: "New password is required!" });
+      }
+      if (newPassword.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "Password must be more than 6 characters long!" });
+      }
+      const student = await prisma.student.findUnique({
+        where: { id: studentId },
+      });
+      if (!student) {
+        return res.status(404).json({ error: "Student not found!" });
+      }
+      await prisma.student.update({
+        where: { id: studentId },
+        data: { password: newPassword },
+      });
+      return res
+        .status(200)
+        .json({ message: "Student password updated successfully!" });
     } catch (error) {
       next(error);
     }

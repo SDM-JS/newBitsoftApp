@@ -1,11 +1,10 @@
 import { prisma } from "../lib/prisma.js";
-import bcrypt from "bcrypt";
 
 async function main() {
   console.log("Starting seeding...");
 
   // 1. Create Admin
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  const adminPassword = "admin123";
   const admin = await prisma.admin.upsert({
     where: { id: "admin-id" },
     update: {},
@@ -26,7 +25,7 @@ async function main() {
   console.log("Group created:", group.name);
 
   // 3. Create Students
-  const studentPassword = await bcrypt.hash("student123", 10);
+  const studentPassword = "student123";
   const student1 = await prisma.student.create({
     data: {
       fullName: "John Doe",

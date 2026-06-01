@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { prisma } from "../lib/prisma.js";
-import bcrypt from "bcrypt";
+
 import jwt from "jsonwebtoken";
 
 class AuthController {
@@ -25,7 +25,7 @@ class AuthController {
           username,
           password,
           groupId: groupId || undefined,
-          level: 'easy'
+          level: "easy",
         },
       });
       return res.status(201).json({
@@ -92,8 +92,7 @@ class AuthController {
         return res.status(400).json({ error: "Invalid email or password!" });
       }
 
-      const isCorrectPassword = await bcrypt.compare(password, admin.password);
-      if (!isCorrectPassword) {
+      if (password !== admin.password) {
         return res.status(400).json({ error: "Invalid email or password!" });
       }
 
