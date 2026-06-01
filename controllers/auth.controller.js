@@ -127,12 +127,10 @@ class AuthController {
           .status(400)
           .json({ error: "Password must be more than 6 characters long!" });
       }
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
       const newAdmin = await prisma.admin.create({
         data: {
           email,
-          password: hashedPassword,
+          password,
         },
       });
       return res.status(201).json({
