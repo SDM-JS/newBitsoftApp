@@ -1,0 +1,8 @@
+node_modules
+generated
+lib/generated
+.env
+.git
+.gitignore
+.idea
+*.md
